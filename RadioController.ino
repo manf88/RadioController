@@ -1,7 +1,7 @@
 #include "RCSwitch.h"
 
-#define triggerPin 13
-#define echoPin 12
+#define triggerPin 8
+#define echoPin 7
 #define triggerDistance 15
 #define timeout 5000
 
