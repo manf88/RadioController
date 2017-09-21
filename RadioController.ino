@@ -1,62 +1,63 @@
-/*
-  Example for different sending methods
-  
-  https://github.com/sui77/rc-switch/
-  
-*/
-
 #include "RCSwitch.h"
 
+#define triggerPin 13
+#define echoPin 12
+#define triggerDistance 15
+#define timeout 5000
+
+#define bits 24
+#define signalOn 21589
+#define signalOff 21588
+    
 RCSwitch mySwitch = RCSwitch();
 
+bool isActive = false;
+
 void setup() {
+  //setup pins for the ultrasonic sensor
+  pinMode(triggerPin, OUTPUT);
+  pinMode(echoPin, INPUT);
 
   Serial.begin(9600);
   
   // Transmitter is connected to Arduino Pin #10  
   mySwitch.enableTransmit(10);
-
-  mySwitch.enableReceive(0);  // Receiver on interrupt 0 => that is pin #2
-  // Optional set pulse length.
-  // mySwitch.setPulseLength(320);
   
   // Optional set protocol (default is 1, will work for most outlets)
-  // mySwitch.setProtocol(2);
+  mySwitch.setProtocol(1);
   
   // Optional set number of transmission repetitions.
   mySwitch.setRepeatTransmit(15);
-  
 }
 
 void loop() {
-  if (mySwitch.available()) {
-    output(mySwitch.getReceivedValue(), mySwitch.getReceivedBitlength(), mySwitch.getReceivedDelay(), mySwitch.getReceivedRawdata(),mySwitch.getReceivedProtocol());
-    mySwitch.resetAvailable();
+  //example code from http://www.instructables.com/id/Simple-Arduino-and-HC-SR04-Example/
+  long duration, distance;
+
+  digitalWrite(triggerPin, LOW); 
+  delayMicroseconds(2);
+  digitalWrite(triggerPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(triggerPin, LOW);
+  
+  duration = pulseIn(echoPin, HIGH);
+  distance = (duration/2) / 29.1;
+
+  Serial.print(distance);
+  Serial.println(" cm");
+
+  if(distance < triggerDistance){
+    //toggle the current state
+    isActive = !isActive;
+     
+    if(isActive){
+      mySwitch.send(signalOn, bits);
+    }
+    else{
+      mySwitch.send(signalOff, bits);
+    }
+    
+    //add a delay here to prevent the switch from "flipping"
+    delay(timeout);
   }
-
-  /* See Example: TypeA_WithDIPSwitches */
-  //mySwitch.switchOn("11111", "00010");
-  //delay(1000);
-  //mySwitch.switchOff("11111", "00010");
-  //delay(1000);
-
-  /* Same switch as above, but using decimal code */
-  mySwitch.send(21589, 24);
-  delay(1000);  
-  mySwitch.send(21588, 24);
-  delay(1000);  
-
-  /* Same switch as above, but using binary code */
-  //mySwitch.send("000000000001010100010001");
-  //delay(1000);  
-  //mySwitch.send("000000000001010100010100");
-  //delay(1000);
-
-  /* Same switch as above, but tri-state code */ 
-  //mySwitch.sendTriState("00000FFF0F0F");
-  //delay(1000);  
-  //mySwitch.sendTriState("00000FFF0FF0");
-  //delay(1000);
-
-  //delay(20000);
 }
